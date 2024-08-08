@@ -1,0 +1,32 @@
+name: Security Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  horusec-security:
+    name: Esteira Segura
+    runs-on: ubuntu-latest
+
+    steps:
+    
+    - name: Check out code
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+        fetch-depth: 0
+
+    - name: Executando Horusec SAST & OWASP Dependency Check
+      run: |
+        curl -fsSL https://raw.githubusercontent.com/ZupIT/horusec/main/deployments/scripts/install.sh | bash -s latest-beta
+        horusec start -p="./" -e="false" -o="json" -O="scan_results.json" -w="true"
+
+    - name: Executando GitLeaks
+      uses: gitleaks/gitleaks-action@v2
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
